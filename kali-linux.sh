@@ -23,7 +23,9 @@ chmod +x ng.sh
 while true; do
     clear
     echo "Get your authtoken from: https://dashboard.ngrok.com/get-started/your-authtoken"
+    sleep 2
     echo "Note: Copy the full token including the '2' at the beginning if present"
+    sleep 2
     read -p "Paste your ngrok authtoken here: " CRP
     
     # Basic token validation
