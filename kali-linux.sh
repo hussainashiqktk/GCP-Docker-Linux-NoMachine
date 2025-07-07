@@ -99,7 +99,7 @@ docker run --rm -d \
     -e USER=user \
     --cap-add=SYS_PTRACE \
     --shm-size=1g \
-    kalilinux/kali-rolling \
+    thuonghai2711/nomachine-ubuntu-desktop:wine \
     tail -f /dev/null  # Keeps container running
 
 # Install required tools
