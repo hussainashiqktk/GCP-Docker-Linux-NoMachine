@@ -1,64 +1,30 @@
 #!/bin/bash
 
-# Function to clean up everything
+# Function to clean up
 cleanup() {
-    echo -e "\nCleaning up..."
-    pkill -f ngrok >/dev/null 2>&1 || true
-    docker kill nomachine-xfce4 >/dev/null 2>&1 || true
-    docker rm nomachine-xfce4 >/dev/null 2>&1 || true
-    rm -f ngrok ngrok.tgz >/dev/null 2>&1 || true
-    echo "Cleanup complete."
-    sleep 2
+    pkill -f ngrok >/dev/null 2>&1
+    docker kill nomachine-xfce4 >/dev/null 2>&1
+    docker rm nomachine-xfce4 >/dev/null 2>&1
 }
 
-# Initial cleanup
-cleanup
+# Install ngrok
+wget -O ng.sh https://github.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/raw/main/ngrok.sh >/dev/null 2>&1
+chmod +x ng.sh
+./ng.sh
 
-# Install ngrok properly
-echo -e "\n\033[1;34mInstalling ngrok...\033[0m"
-wget -q https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.tgz -O ngrok.tgz
-tar xzf ngrok.tgz
-rm ngrok.tgz
-chmod +x ngrok
-mv ngrok /usr/local/bin/
-echo -e "\033[1;32mNgrok installed successfully\033[0m"
+function goto {
+    label=$1
+    cmd=$(sed -n "/^:[[:blank:]][[:blank:]]*${label}/{:a;n;p;ba};" $0 | grep -v ':$')
+    eval "$cmd"
+    exit
+}
 
-# Ngrok authentication
-while true; do
-    clear
-    echo -e "\n\033[1;34mNgrok Authentication\033[0m"
-    echo "1. Go to: https://dashboard.ngrok.com/get-started/your-authtoken"
-    echo "2. Copy your authtoken"
-    echo "3. Paste it below (Ctrl+C to exit)"
-    echo -e "\n\033[1;31mIMPORTANT: Token must be EXACTLY as shown (usually starts with 2...)\033[0m"
-    
-    read -p $'\nEnter your ngrok authtoken: ' CRP
-    
-    if [[ ! $CRP =~ ^[a-zA-Z0-9_]{32,}$ ]]; then
-        echo -e "\n\033[1;31mERROR: Invalid token format! Must be 32+ alphanumeric chars\033[0m"
-        sleep 2
-        continue
-    fi
-    
-    echo -e "\n\033[1;33mVerifying token...\033[0m"
-    ngrok config add-authtoken "$CRP" >/dev/null 2>&1
-    
-    ngrok tcp 4000 >/dev/null 2>&1 &
-    sleep 5
-    
-    if curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then
-        pkill -f ngrok
-        sleep 1
-        echo -e "\n\033[1;32mToken verified successfully!\033[0m"
-        break
-    else
-        echo -e "\n\033[1;31mERROR: Token verification failed!\033[0m"
-        read -p $'\nPress Enter to try again or Ctrl+C to exit'
-        cleanup
-    fi
-done
+: ngrok
+clear
+echo "Go to: https://dashboard.ngrok.com/get-started/your-authtoken"
+read -p "Paste Ngrok Authtoken: " CRP
+./ngrok config add-authtoken $CRP 
 
-# Region selection
 clear
 echo "Repo: https://github.com/kmille36/Docker-Ubuntu-Desktop-NoMachine"
 echo "======================="
@@ -72,19 +38,15 @@ echo "sa - South America (Sao Paulo)"
 echo "jp - Japan (Tokyo)"
 echo "in - India (Mumbai)"
 read -p "Choose ngrok region (default: us): " CRP || CRP="us"
-
-# Start ngrok
-echo -e "\n\033[1;33mStarting ngrok tunnel...\033[0m"
-ngrok tcp --region $CRP 4000 >/dev/null 2>&1 &
-sleep 5
-
-if ! curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then
-    echo -e "\n\033[1;31mERROR: Ngrok failed to start!\033[0m"
-    exit 1
+./ngrok tcp --region $CRP 4000 &>/dev/null &
+sleep 1
+if curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then 
+    echo OK; 
+else 
+    echo "Ngrok Error! Please try again!" && sleep 1 && goto ngrok
 fi
 
 # Start container with NoMachine
-echo -e "\n\033[1;34mStarting NoMachine container...\033[0m"
 docker run --rm -d \
     --network host \
     --privileged \
@@ -93,49 +55,46 @@ docker run --rm -d \
     -e USER=user \
     --cap-add=SYS_PTRACE \
     --shm-size=1g \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
     thuonghai2711/nomachine-ubuntu-desktop:wine
 
-# Install tools (WITHOUT breaking NoMachine)
-echo -e "\n\033[1;33mInstalling tools...\033[0m"
+# Install tools with error handling
+echo "Installing system tools..."
 docker exec nomachine-xfce4 bash -c "
-    apt update -y && \
-    apt install -y \
-        tor \
-        proxychains \
-        psmisc \
-        python3-pip \
-        python3-venv \
-        wget \
-        curl \
-        nmap \
-        net-tools \
-        xfce4 \
-        xfce4-goodies \
-        dbus-x11 && \
-    sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains.conf 2>/dev/null || \
-    sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains4.conf && \
+    wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    apt update && \
+    apt upgrade -y && \
+    apt install -y tor proxychains psmisc python3-pip python3-venv wget curl nmap net-tools && \
+    (sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains.conf 2>/dev/null || \
+     sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains4.conf) && \
+    service tor restart && \
+    sleep 5 && \
     echo 'alias newip=\"pkill -HUP tor && sleep 5\"' >> /home/user/.bashrc && \
-    echo 'export DISPLAY=:1' >> /home/user/.bashrc
+    . /home/user/.bashrc && \
+    newip && \
+    echo 'Proxychains check:' && \
+    proxychains curl -s ifconfig.me
 "
 
-# Wait for services
-sleep 15
+# Verify installations
+docker exec nomachine-xfce4 bash -c "
+    echo '=== Tool Verification ===' && \
+    tor --version && \
+    proxychains -q echo 'Proxychains working' && \
+    python3 --version && \
+    pip3 --version && \
+    nmap --version
+"
 
-# Get connection info
 clear
-NGROK_URL=$(curl -s http://127.0.0.1:4040/api/tunnels | sed -nE 's/.*public_url":"tcp:..([^"]*).*/\1/p')
-
-echo -e "\n\033[1;32mSETUP COMPLETE!\033[0m"
-echo -e "\n\033[1;34mCONNECTION INFO:\033[0m"
-echo -e "IP: \033[1;33m$NGROK_URL\033[0m"
-echo -e "User: \033[1;33muser\033[0m"
-echo -e "Pass: \033[1;33m123456\033[0m"
-echo -e "\n\033[1;34mNoMachine Client:\033[0m"
-echo "Download: https://www.nomachine.com/download"
+echo "NoMachine: https://www.nomachine.com/download"
+echo "=== Connection Info ==="
+echo "IP: $(curl -s http://127.0.0.1:4040/api/tunnels | sed -nE 's/.*public_url":"tcp:..([^"]*).*/\1/p')"
+echo "User: user"
+echo "Pass: 123456"
+echo "======================"
 
 # Keep-alive
 while true; do
-    echo -ne "\r\033[1;36mRunning @ $(date +%H:%M:%S) | Ctrl+C to exit\033[0m"
+    echo -ne "\rRunning @ $(date +%H:%M:%S) | Ctrl+C to exit"
     sleep 1
 done
