@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Kill any existing ngrok and Docker instances
+pkill ngrok 2>/dev/null
+docker kill nomachine-xfce4 2>/dev/null
+docker rm nomachine-xfce4 2>/dev/null
+
 wget -O ng.sh https://github.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/raw/main/ngrok.sh > /dev/null 2>&1
 chmod +x ng.sh
 ./ng.sh
