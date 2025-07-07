@@ -78,7 +78,7 @@ docker exec nomachine-xfce4 bash -c "
     wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     apt update && \
     apt upgrade -y && \
-    apt install -y tor proxychains psmisc python3-pip python3-venv wget curl nmap net-tools && \
+    apt install -y tor proxychains psmisc python3-pip python3-venv wget curl nmap ncat net-tools && \
     (sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains.conf 2>/dev/null || \
      sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains4.conf) && \
     service tor restart && \
