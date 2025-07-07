@@ -5,7 +5,7 @@
 
 | Desktop Configuration          | Installation Command |
 |--------------------------------|----------------------|
-| Kali Linux | `bash <(curl -sL https://github.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/blob/3bbbd8f1f08fe5e70f14d24239882c374176f506/kali-linux.sh)` |
+| Kali Linux | `wget https://raw.githubusercontent.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/refs/heads/main/ubuntu-with-tor.sh && bash ubuntu-with-tor.sh` |
 | XFCE4 (Standard) | `bash <(curl -sL https://raw.githubusercontent.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/main/xfce4-install.sh)` |
 | XFCE4 with WineHQ | `bash <(curl -sL https://raw.githubusercontent.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/main/wine-install.sh)` |
 | XFCE4 with Windows 10 Theme | `bash <(curl -sL https://raw.githubusercontent.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/main/win10-theme-install.sh)` |
