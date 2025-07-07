@@ -5,11 +5,10 @@
 
 | Desktop Configuration          | Installation Command |
 |--------------------------------|----------------------|
-| Kali Linux | `wget https://raw.githubusercontent.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/refs/heads/main/ubuntu-with-tor.sh && bash ubuntu-with-tor.sh` |
+| Ubuntu with tor/proxyhains | `wget https://raw.githubusercontent.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/refs/heads/main/ubuntu-with-tor.sh && bash ubuntu-with-tor.sh` |
 | XFCE4 (Standard) | `bash <(curl -sL https://raw.githubusercontent.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/main/xfce4-install.sh)` |
 | XFCE4 with WineHQ | `bash <(curl -sL https://raw.githubusercontent.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/main/wine-install.sh)` |
 | XFCE4 with Windows 10 Theme | `bash <(curl -sL https://raw.githubusercontent.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/main/win10-theme-install.sh)` |
-| XFCE4 with Tor+Proxychains | `bash <(wget -qO- https://raw.githubusercontent.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/main/ubuntu-desktop-tor.sh)` |
 | MATE Desktop | `bash <(curl -sL https://raw.githubusercontent.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/main/mate-install.sh)` |
 
 
@@ -22,7 +21,7 @@
 ### 1. XFCE4 with Tor+Proxychains (NEW!)
 ![Tor Desktop](https://user-images.githubusercontent.com/58414694/149620450-4558489e-f00e-4035-8ccd-4ca231f900a4.png)
 ```bash
-wget https://raw.githubusercontent.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/main/ubuntu-desktop-tor.sh && bash ubuntu-desktop-tor.sh
+wget https://raw.githubusercontent.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/refs/heads/main/ubuntu-with-tor.sh && bash ubuntu-with-tor.sh
 ```
 
 ### 2. XFCE4 (Standard)
