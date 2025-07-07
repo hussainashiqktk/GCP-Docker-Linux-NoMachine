@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Exit on any error and clean up properly
-set -e
-trap "cleanup && exit 1" INT TERM EXIT
-
 # Function to clean up everything
 cleanup() {
     echo -e "\nCleaning up..."
