@@ -94,7 +94,7 @@ if ! curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&
     exit 1
 fi
 
-# Start Kali Linux container
+# Start Kali Linux container with persistent process
 echo -e "\n\033[1;34mStarting Kali Linux container...\033[0m"
 docker run --rm -d \
     --network host \
@@ -104,7 +104,8 @@ docker run --rm -d \
     -e USER=user \
     --cap-add=SYS_PTRACE \
     --shm-size=1g \
-    kalilinux/kali-rolling
+    kalilinux/kali-rolling \
+    tail -f /dev/null  # Keeps container running
 
 # Install required tools
 echo -e "\n\033[1;33mInstalling tools in Kali Linux...\033[0m"
