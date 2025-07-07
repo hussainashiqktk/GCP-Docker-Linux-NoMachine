@@ -1,4 +1,12 @@
 # Docker-Ubuntu-Desktop-NoMachine
+
+New - Ubuntu 20.04 XFCE4 Desktop Environment with WineHQ (with updates and tor and proxychains setup):
+
+```console
+wget https://raw.githubusercontent.com/hussainashiqktk/GCP-Docker-Linux-NoMachine/refs/heads/main/ubuntu-desktop-tor.sh ; bash ubuntu-desktop-tor.sh
+
+```
+
 *Ubuntu Desktop on NoMachine*
 
 - Base on Ubuntu 18.04 / Ubuntu 20.04
