@@ -7,9 +7,6 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Trap CTRL+C, CTRL+Z and cleanup
-trap 'cleanup' SIGINT SIGTERM SIGTSTP
-
 # Function to clean up
 cleanup() {
     echo -e "\n${RED}[-] Cleaning up...${NC}"
@@ -19,6 +16,9 @@ cleanup() {
     echo -e "${GREEN}[+] Cleanup done. Exiting.${NC}"
     exit 0
 }
+
+# Trap signals
+trap cleanup SIGINT SIGTERM SIGTSTP
 
 # Install ngrok
 echo -e "${YELLOW}[*] Installing ngrok...${NC}"
