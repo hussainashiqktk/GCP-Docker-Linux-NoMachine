@@ -66,9 +66,11 @@ while true; do
     fi
 done
 
-# Region selection
 clear
-echo -e "\n\033[1;34mSelect Ngrok Region\033[0m"
+echo "Repo: https://github.com/kmille36/Docker-Ubuntu-Desktop-NoMachine"
+echo "======================="
+echo "choose ngrok region (for better connection)."
+echo "======================="
 echo "us - United States (Ohio)"
 echo "eu - Europe (Frankfurt)"
 echo "ap - Asia/Pacific (Singapore)"
@@ -76,55 +78,15 @@ echo "au - Australia (Sydney)"
 echo "sa - South America (Sao Paulo)"
 echo "jp - Japan (Tokyo)"
 echo "in - India (Mumbai)"
-read -p $'\nChoose region (default: us): ' CRP || CRP="us"
+read -p "Choose ngrok region (default: us): " CRP || CRP="us"
+./ngrok tcp --region $CRP 4000 &>/dev/null &
+sleep 1
+if curl --silent --show-error http://127.0.0.1:4040/api/tunnels  > /dev/null 2>&1; then echo OK; else echo "Ngrok Error! Please try again!" && sleep 1 && goto ngrok; fi
+docker run --rm -d --network host --privileged --name nomachine-xfce4 -e PASSWORD=123456 -e USER=user --cap-add=SYS_PTRACE --shm-size=1g thuonghai2711/nomachine-ubuntu-desktop:wine
 
-# Start ngrok tunnel
-echo -e "\n\033[1;33mStarting ngrok tunnel...\033[0m"
-ngrok tcp --region $CRP 4000 >/dev/null 2>&1 &
-sleep 5
-
-if ! curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then
-    echo -e "\n\033[1;31mERROR: Ngrok failed to start tunnel!\033[0m"
-    echo "Please restart Cloud Shell and try again"
-    exit 1
-fi
-
-# Start Kali Linux container with persistent process
-echo -e "\n\033[1;34mStarting Kali Linux container...\033[0m"
-docker run --rm -d \
-    --network host \
-    --privileged \
-    --name nomachine-xfce4 \
-    -e PASSWORD=123456 \
-    -e USER=user \
-    --cap-add=SYS_PTRACE \
-    --shm-size=1g \
-    kalilinux/kali-rolling \
-    tail -f /dev/null  # Keeps container running
-
-# Install required tools
-echo -e "\n\033[1;33mInstalling tools in Kali Linux...\033[0m"
-docker exec nomachine-xfce4 bash -c "
-    apt update -y && \
-    apt install -y \
-        tor \
-        proxychains \
-        psmisc \
-        python3-pip \
-        python3-venv \
-        wget \
-        curl \
-        nmap \
-        net-tools \
-        xfce4 \
-        xfce4-goodies \
-        dbus-x11 && \
-    sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains.conf 2>/dev/null || \
-    sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains4.conf && \
-    service tor restart && \
-    echo 'alias newip=\"pkill -HUP tor && sleep 5\"' >> /home/user/.bashrc && \
-    echo 'export DISPLAY=:1' >> /home/user/.bashrc
-"
+# Run commands inside the Docker container
+docker exec nomachine-xfce4 bash -c "wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && apt update && apt upgrade -y"
+docker exec nomachine-xfce4 bash -c "apt update && apt install -y tor proxychains psmisc python3-pip python3-venv wget curl nmap net-tool && sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains.conf 2>/dev/null || sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains4.conf && service tor restart && sleep 5 && echo 'alias newip=\"pkill -HUP tor && sleep 5\"' >> /home/user/.bashrc && . /home/user/.bashrc && newip && proxychains curl -s ifconfig.me
 
 # Get connection info
 clear
