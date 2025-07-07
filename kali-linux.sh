@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Function to clean up everything
+# Function to kill all existing processes
 cleanup() {
     echo "Cleaning up previous instances..."
     pkill -f ngrok >/dev/null 2>&1
@@ -14,52 +14,52 @@ cleanup() {
 cleanup
 
 # Download ngrok
+echo "Downloading ngrok..."
 wget -O ng.sh https://github.com/kmille36/Docker-Ubuntu-Desktop-NoMachine/raw/main/ngrok.sh >/dev/null 2>&1
 chmod +x ng.sh
 ./ng.sh
 
-function goto {
-    label=$1
-    cd
-    cmd=$(sed -n "/^:[[:blank:]][[:blank:]]*${label}/{:a;n;p;ba};" $0 | grep -v ':$')
-    eval "$cmd"
-    exit
-}
-
-: ngrok
+# Ngrok setup
 while true; do
     clear
-    echo "Go to: https://dashboard.ngrok.com/get-started/your-authtoken"
-    echo "Note: If previous attempts failed, please restart Cloud Shell first"
-    read -p "Paste Ngrok Authtoken (or Ctrl+C to exit): " CRP
+    echo "Get your authtoken from: https://dashboard.ngrok.com/get-started/your-authtoken"
+    echo "Note: Copy the full token including the '2' at the beginning if present"
+    read -p "Paste your ngrok authtoken here: " CRP
     
-    # Verify token looks valid
+    # Basic token validation
     if [[ ! $CRP =~ ^[a-zA-Z0-9_]{32,}$ ]]; then
-        echo "Invalid token format! It should be 32+ alphanumeric characters."
+        echo "ERROR: Token should be 32+ alphanumeric characters"
         sleep 2
         continue
     fi
     
-    cleanup
+    # Configure ngrok
+    echo "Configuring ngrok..."
     ./ngrok config add-authtoken "$CRP" >/dev/null 2>&1
     
-    # Verify token works
-    timeout 5 ./ngrok tcp 4000 >/dev/null 2>&1 &
-    sleep 3
+    # Test the token
+    timeout 10 ./ngrok tcp 4000 >/dev/null 2>&1 &
+    sleep 5
+    
     if curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then
+        echo "Ngrok configured successfully!"
         pkill -f ngrok
+        sleep 1
         break
     else
-        echo "Invalid token or ngrok error! Please check your token."
-        sleep 2
+        echo "ERROR: Ngrok failed to start with this token"
+        echo "Possible reasons:"
+        echo "1. Invalid/expired token"
+        echo "2. Network issues"
+        echo "3. Ngrok service outage"
+        read -p "Press Enter to try again or Ctrl+C to exit"
+        cleanup
     fi
 done
 
+# Get region
 clear
-echo "Repo: https://github.com/kmille36/Docker-Ubuntu-Desktop-NoMachine"
-echo "======================="
-echo "choose ngrok region (for better connection)."
-echo "======================="
+echo "Select ngrok region:"
 echo "us - United States (Ohio)"
 echo "eu - Europe (Frankfurt)"
 echo "ap - Asia/Pacific (Singapore)"
@@ -67,55 +67,50 @@ echo "au - Australia (Sydney)"
 echo "sa - South America (Sao Paulo)"
 echo "jp - Japan (Tokyo)"
 echo "in - India (Mumbai)"
-read -p "Choose ngrok region (default: us): " CRP || CRP="us"
+read -p "Choose region (default: us): " CRP || CRP="us"
 
-# Start ngrok with fresh instance
+# Start ngrok
+echo "Starting ngrok..."
 cleanup
 ./ngrok tcp --region $CRP 4000 >/dev/null 2>&1 &
-sleep 3
+sleep 5
 
 if ! curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then
-    echo "Ngrok failed to start! Trying one last time..."
-    cleanup
-    ./ngrok tcp --region $CRP 4000 >/dev/null 2>&1 &
-    sleep 3
-    if ! curl --silent --show-error http://127.0.0.1:4040/api/tunnels >/dev/null 2>&1; then
-        echo "Critical ngrok error! Please restart Cloud Shell and try again."
-        exit 1
-    fi
+    echo "ERROR: Ngrok failed to start after authentication"
+    echo "Please try restarting Cloud Shell and running again"
+    exit 1
 fi
 
-# Start Docker with Kali
+# Start Kali Linux container
+echo "Starting Kali Linux container..."
 docker run --rm -d --network host --privileged --name nomachine-xfce4 -e PASSWORD=123456 -e USER=user --cap-add=SYS_PTRACE --shm-size=1g kalilinux/kali-rolling
 
-# Install requirements
+# Install tools
+echo "Installing required tools..."
 docker exec nomachine-xfce4 bash -c "
     apt update && \
-    apt install -y wget curl tor proxychains psmisc python3-pip python3-venv nmap net-tools && \
+    apt install -y tor proxychains psmisc python3-pip python3-venv wget curl nmap net-tools && \
     sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains.conf 2>/dev/null || \
     sed -i 's/^socks4.*/socks5 127.0.0.1 9050/' /etc/proxychains4.conf && \
     service tor restart && \
-    echo 'alias newip=\"pkill -HUP tor && sleep 5\"' >> /home/user/.bashrc && \
-    . /home/user/.bashrc
+    echo 'alias newip=\"pkill -HUP tor && sleep 5\"' >> /home/user/.bashrc
 "
 
+# Display connection info
 clear
-echo "NoMachine: https://www.nomachine.com/download"
-echo "Done! NoMachine Information:"
-echo "IP Address:"
-curl --silent --show-error http://127.0.0.1:4040/api/tunnels | sed -nE 's/.*public_url":"tcp:..([^"]*).*/\1/p' 
+echo "========================================"
+echo "NoMachine Connection Information"
+echo "========================================"
+echo "IP: $(curl -s http://127.0.0.1:4040/api/tunnels | sed -nE 's/.*public_url":"tcp:..([^"]*).*/\1/p')"
 echo "User: user"
-echo "Passwd: 123456"
-echo "VM can't connect? Restart Cloud Shell then Re-run script."
+echo "Password: 123456"
+echo "========================================"
+echo "Download NoMachine: https://www.nomachine.com"
+echo "========================================"
+echo "Note: If connection fails, restart Cloud Shell"
 
-# Keep-alive with monitoring
+# Keep-alive
 while true; do
-    echo -ne "\rRunning [$(date +%H:%M:%S)] | CTRL+C to exit"
-    if ! curl --silent --output /dev/null http://127.0.0.1:4040; then
-        echo -e "\nNgrok connection lost! Reconnecting..."
-        cleanup
-        ./ngrok tcp --region $CRP 4000 >/dev/null 2>&1 &
-        sleep 3
-    fi
+    echo -ne "\r[$(date +%H:%M:%S)] Session active - Press Ctrl+C to exit"
     sleep 1
 done
