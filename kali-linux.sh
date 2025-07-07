@@ -84,7 +84,6 @@ read -p $'\nChoose region (default: us): ' CRP || CRP="us"
 
 # Start ngrok tunnel
 echo -e "\n\033[1;33mStarting ngrok tunnel...\033[0m"
-cleanup
 ngrok tcp --region $CRP 4000 >/dev/null 2>&1 &
 sleep 5
 
@@ -148,7 +147,6 @@ echo -e "\n\033[1;31mNOTE: If connection fails, RESTART CLOUD SHELL and run agai
 while true; do
     if ! curl --silent --output /dev/null http://127.0.0.1:4040; then
         echo -e "\n\033[1;31mNgrok tunnel lost! Reconnecting...\033[0m"
-        cleanup
         ngrok tcp --region $CRP 4000 >/dev/null 2>&1 &
         sleep 5
     fi
