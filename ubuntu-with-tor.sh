@@ -72,7 +72,8 @@ docker exec nomachine-xfce4 bash -c "
     . /home/user/.bashrc && \
     newip && \
     echo 'Proxychains check:' && \
-    proxychains curl -s ifconfig.me
+    proxychains curl -s ifconfig.me && \
+    echo \"alias newip='sudo pkill -HUP tor'\" | sudo tee -a ~/.bashrc > /dev/null && source ~/.bashrc
 "
 
 # Verify installations
